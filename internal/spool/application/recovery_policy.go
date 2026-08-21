@@ -1,3 +1,3 @@
 package application
 
-func recoveryFailureState() string { return "failed" }
+func recoveryFailureState() string { return "pending" }

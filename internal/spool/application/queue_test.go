@@ -13,11 +13,13 @@ func (q queueFiles) Write(context.Context, string, []byte) (string, error) { ret
 func (queueFiles) Read(context.Context, string) ([]byte, error)            { return nil, nil }
 func (queueFiles) Remove(context.Context, string) error                    { return nil }
 
+
 type queueRepo struct{}
 
 func (queueRepo) Put(context.Context, domain.Item) error              { return nil }
 func (queueRepo) Pending(context.Context, int) ([]domain.Item, error) { return nil, nil }
 func (queueRepo) Mark(context.Context, string, string) error          { return nil }
+
 
 func TestQueuePreservesWriteSentinel(t *testing.T) {
 	sentinel := errors.New("spool volume offline")

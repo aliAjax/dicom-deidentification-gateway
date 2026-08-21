@@ -20,8 +20,18 @@ func (r *Recoverer) Recover(ctx context.Context, limit int, fn func(context.Cont
 		return err
 	}
 	for _, item := range items {
-		if err := r.recoverItem(ctx, item, fn); err != nil {
-			return err
+		b, e := r.files.Read(ctx, item.Path)
+		if e != nil {
+			_ = r.repo.Mark(ctx, item.ID, recoveryFailureState())
+			continue
+		}
+		if e = fn(ctx, item, b); e != nil {
+			item.Attempts++
+			_ = r.repo.Mark(ctx, item.ID, "failed")
+			continue
+		}
+		if e = r.repo.Mark(ctx, item.ID, "done"); e != nil {
+			return fmt.Errorf("mark spool item: %v", e)
 		}
 	}
 	return nil
@@ -37,7 +47,7 @@ func (r *Recoverer) recoverItem(ctx context.Context, item domain.Item, fn func(c
 	}
 	b, err := r.files.Read(ctx, item.Path)
 	if err != nil {
-		return finishRecovery(ctx, r.repo, item.ID, recoveryFailureState(), err)
+		return finishRecovery(ctx, r.repo, item.ID, "failed", err)
 	}
 	if err = fn(ctx, item, b); err != nil {
 		return finishRecovery(ctx, r.repo, item.ID, "pending", err)

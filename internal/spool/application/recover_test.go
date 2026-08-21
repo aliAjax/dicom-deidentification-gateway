@@ -86,3 +86,12 @@ func TestRecoverPreservesMarkError(t *testing.T) {
 		t.Fatalf("err=%v", err)
 	}
 }
+
+func TestRecoverStopsWhenContextCancelled(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+	r := &recoverRepo{items: []domain.Item{{ID: "a", Path: "a"}}}
+	called := false
+	err := New(r, &recoverFiles{}).Recover(ctx, 10, func(context.Context, domain.Item, []byte) error { called = true; return nil })
+	if !errors.Is(err, context.Canceled) || called { t.Fatalf("err=%v called=%v", err, called) }
+}
