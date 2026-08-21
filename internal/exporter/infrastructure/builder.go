@@ -8,6 +8,7 @@ import (
 	"github.com/example/dicom-deidentification-gateway/internal/platform"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 )
 
@@ -20,11 +21,11 @@ func (b *Builder) Build(_ context.Context, study string, paths []string) (domain
 	}
 	id := platform.NewID("export")
 	out := filepath.Join(b.Dir, id+".manifest")
-	raw := domain.ManifestText(paths)
+	raw := strings.Join(paths, "\n")
 	if err := os.WriteFile(out, []byte(raw), 0600); err != nil {
 		return domain.Export{}, err
 	}
 	h := sha256.Sum256([]byte(raw))
-	return domain.Export{ID: id, StudyID: study, Path: out, Hash: hex.EncodeToString(h[:]), Status: "completed", InstanceCount: len(paths), Files: domain.CanonicalPaths(paths)}, nil
+	return domain.Export{ID: id, StudyID: study, Path: out, Hash: hex.EncodeToString(h[:]), Status: "completed", InstanceCount: len(paths), Files: paths}, nil
 }
 func (B Builder) At(t time.Time) string { return t.UTC().Format(time.RFC3339) }

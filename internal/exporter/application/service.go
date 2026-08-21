@@ -14,12 +14,11 @@ func New(repo domain.Repository, builder domain.Builder) *Service {
 	return &Service{repo: repo, builder: builder}
 }
 func (s *Service) Create(ctx context.Context, study string, paths []string) (domain.Export, error) {
-	snapshot := append([]string(nil), paths...)
-	e, err := s.builder.Build(ctx, study, snapshot)
+	e, err := s.builder.Build(ctx, study, paths)
 	if err != nil {
 		return domain.Export{}, err
 	}
-	e.Files = append([]string(nil), e.Files...)
+	e.Files = e.Files
 	if err = s.repo.Save(ctx, e); err != nil {
 		return domain.Export{}, err
 	}
