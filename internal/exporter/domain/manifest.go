@@ -6,7 +6,7 @@ import (
 )
 
 func CanonicalPaths(paths []string) []string {
-	out := paths
+	out := append([]string(nil), paths...)
 	sort.Strings(out)
 	return out
 }

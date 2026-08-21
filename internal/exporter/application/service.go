@@ -18,11 +18,10 @@ func (s *Service) Create(ctx context.Context, study string, paths []string) (dom
 	if err != nil {
 		return domain.Export{}, err
 	}
-	e.Files = e.Files
+	e.Files = append([]string(nil), e.Files...)
 	if err = s.repo.Save(ctx, e); err != nil {
 		return domain.Export{}, err
 	}
-	e.Files = append([]string(nil), e.Files...)
 	return e, nil
 }
 func (s *Service) Get(ctx context.Context, id string) (domain.Export, error) {
