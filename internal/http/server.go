@@ -15,7 +15,6 @@ import (
 	"github.com/example/dicom-deidentification-gateway/internal/platform"
 	routingd "github.com/example/dicom-deidentification-gateway/internal/routing/domain"
 	routingi "github.com/example/dicom-deidentification-gateway/internal/routing/infrastructure"
-	studyd "github.com/example/dicom-deidentification-gateway/internal/study/domain"
 	studyi "github.com/example/dicom-deidentification-gateway/internal/study/infrastructure"
 	"io"
 	"log/slog"
@@ -37,10 +36,6 @@ type Server struct {
 	studies   *studyi.Memory
 	mu        sync.RWMutex
 	exports   map[string]map[string]any
-}
-
-func structStudy(uid string) studyd.Study {
-	return studyd.Study{ID: platform.NewID("study"), StudyUID: uid, Status: "received"}
 }
 
 func New(cfg config.Config, log *slog.Logger) *Server {
@@ -100,7 +95,13 @@ func (s *Server) instancesHandler(w http.ResponseWriter, r *http.Request) {
 	if err := dicomi.Validate(i); err != nil {
 		i.Status = dicomd.Quarantined
 	}
-	_ = s.persistSpool(i.ID, body)
+	if err := s.persistSpool(i.ID, body); err != nil {
+		// The spool is the durable copy backing the instance record; if it
+		// cannot be written, do not publish a half-backed instance — a later
+		// retry would read "received" with no backing file.
+		writeErr(w, platform.Invalid("persist dicom spool", err))
+		return
+	}
 	if err := s.instances.Save(r.Context(), i); err != nil {
 		writeErr(w, err)
 		return
@@ -171,13 +172,14 @@ func (s *Server) instanceHandler(w http.ResponseWriter, r *http.Request) {
 			writeErr(w, err)
 			return
 		}
-			tags, err := s.profiles.Apply(r.Context(), p, i.Tags)
-			if err != nil {
-				i = rollbackInstance(i)
-				_ = s.instances.Update(r.Context(), i)
-				writeErr(w, err)
-				return
-			}
+		tags, err := s.profiles.Apply(r.Context(), p, i.Tags)
+		if err != nil {
+			// A failed Apply must not publish partial tags or an inflated
+			// status; leave the stored instance untouched and surface the
+			// error so a retry starts from the original deidentified input.
+			writeErr(w, err)
+			return
+		}
 		i.Tags = tags
 		i.PatientID = tags["PatientID"]
 		i.Status = dicomd.Deidentified
@@ -223,7 +225,11 @@ func (s *Server) studiesHandler(w http.ResponseWriter, r *http.Request) {
 	uid := parts[2]
 	st, err := s.studies.ByUID(r.Context(), uid)
 	if err != nil {
-		st = structStudy(uid)
+		// The study does not exist; do not invent a queued/completed state for
+		// it. Surface 404 so callers retry against a real study rather than a
+		// fabricated record.
+		writeErr(w, platform.NotFound("study"))
+		return
 	}
 	if len(parts) >= 4 && parts[3] == "send" {
 		writeJSON(w, missingStudyStatus(), map[string]any{"study_uid": uid, "status": "queued"})

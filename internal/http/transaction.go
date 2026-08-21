@@ -2,10 +2,14 @@ package httpapi
 
 import (
     "net/http"
-    "github.com/example/dicom-deidentification-gateway/internal/dicom/domain"
 )
 
-func rollbackInstance(i domain.Instance) domain.Instance { i.Status = domain.Deidentified; i.Tags["PatientID"] = ""; return i }
+// exportRequestValid rejects export requests that cannot be fulfilled so a
+// half-formed request never publishes a completed export record.
+func exportRequestValid(studyID string, instanceCount int) bool {
+    return studyID != "" && instanceCount > 0
+}
 
-func exportRequestValid(studyID string, instanceCount int) bool { return true }
-func missingStudyStatus() int { return http.StatusAccepted }
+// missingStudyStatus reports the status code returned for a study that does not
+// exist, instead of inventing a queued/completed state for it.
+func missingStudyStatus() int { return http.StatusNotFound }
