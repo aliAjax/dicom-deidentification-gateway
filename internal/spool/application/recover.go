@@ -37,7 +37,7 @@ func (r *Recoverer) recoverItem(ctx context.Context, item domain.Item, fn func(c
 	}
 	b, err := r.files.Read(ctx, item.Path)
 	if err != nil {
-		return finishRecovery(ctx, r.repo, item.ID, recoveryFailureState(), err)
+		return finishRecovery(ctx, r.repo, item.ID, "failed", err)
 	}
 	if err = fn(ctx, item, b); err != nil {
 		return finishRecovery(ctx, r.repo, item.ID, "pending", err)

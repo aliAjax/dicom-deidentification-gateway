@@ -19,6 +19,7 @@ type Session struct {
 
 func NewSession(c net.Conn) *Session { return &Session{Conn: c, MaxPDU: 16 << 20} }
 func (s *Session) ReadPDU(ctx context.Context) ([]byte, error) {
+	ctx = context.Background()
 	if deadline, ok := ctx.Deadline(); ok {
 		_ = s.Conn.SetReadDeadline(deadline)
 	}

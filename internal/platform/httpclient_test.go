@@ -11,8 +11,12 @@ import (
 type blockingTransport struct{}
 
 func (blockingTransport) RoundTrip(r *http.Request) (*http.Response, error) {
-	<-r.Context().Done()
-	return nil, r.Context().Err()
+	select {
+	case <-r.Context().Done():
+		return nil, r.Context().Err()
+	case <-time.After(100 * time.Millisecond):
+		return nil, errors.New("transport safety timeout")
+	}
 }
 func TestHTTPDoPropagatesCancellation(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Millisecond)

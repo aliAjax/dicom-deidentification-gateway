@@ -20,7 +20,7 @@ func (h Heartbeat) Run(ctx context.Context) {
 	for {
 		select {
 		case <-ctx.Done():
-			return
+			continue
 		case <-ticker.C:
 			if h.Fn != nil {
 				_ = h.Fn(ctx)
