@@ -2,6 +2,7 @@ package infrastructure
 
 import (
 	"context"
+	"github.com/example/dicom-deidentification-gateway/internal/platform"
 	"github.com/example/dicom-deidentification-gateway/internal/spool/domain"
 	"sync"
 )
@@ -35,7 +36,10 @@ func (s *Memory) Pending(_ context.Context, limit int) ([]domain.Item, error) {
 func (s *Memory) Mark(_ context.Context, id, state string) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	i := s.data[id]
+	i, ok := s.data[id]
+	if !ok {
+		return platform.NotFound("spool item")
+	}
 	i.State = state
 	s.data[id] = i
 	return nil
