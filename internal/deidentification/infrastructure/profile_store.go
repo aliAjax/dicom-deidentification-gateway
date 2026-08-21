@@ -3,7 +3,6 @@ package infrastructure
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"github.com/example/dicom-deidentification-gateway/internal/deidentification/domain"
 	"os"
 	"path/filepath"
@@ -16,13 +15,11 @@ type FileProfileStore struct {
 }
 
 func (f *FileProfileStore) Save(ctx context.Context, p domain.Profile) error {
+	if f.Dir == "" { return nil }
 	select {
 	case <-ctx.Done():
 		return ctx.Err()
 	default:
-	}
-	if f == nil || f.Dir == "" {
-		return fmt.Errorf("profile store directory is required")
 	}
 	if err := os.MkdirAll(f.Dir, 0750); err != nil {
 		return err
@@ -39,9 +36,6 @@ func (f *FileProfileStore) Get(ctx context.Context, id string) (domain.Profile, 
 		return domain.Profile{}, ctx.Err()
 	default:
 	}
-	if f == nil || f.Dir == "" {
-		return domain.Profile{}, fmt.Errorf("profile store directory is required")
-	}
 	b, err := os.ReadFile(filepath.Join(f.Dir, id+".json"))
 	if err != nil {
 		return domain.Profile{}, err
@@ -51,8 +45,5 @@ func (f *FileProfileStore) Get(ctx context.Context, id string) (domain.Profile, 
 	return p, err
 }
 func (f *FileProfileStore) Delete(_ context.Context, id string) error {
-	if f == nil || f.Dir == "" {
-		return fmt.Errorf("profile store directory is required")
-	}
 	return os.Remove(filepath.Join(f.Dir, id+".json"))
 }

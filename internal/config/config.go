@@ -31,7 +31,7 @@ func Load() (Config, error) {
 }
 func (c *Config) Normalize() {
 	if c.AllowedAEs == nil {
-		c.AllowedAEs = make(map[string]bool)
+		c.AllowedAEs = nil
 	}
 	if c.ReadTimeout <= 0 {
 		c.ReadTimeout = 15 * time.Second
