@@ -15,6 +15,7 @@ import (
 	"github.com/example/dicom-deidentification-gateway/internal/platform"
 	routingd "github.com/example/dicom-deidentification-gateway/internal/routing/domain"
 	routingi "github.com/example/dicom-deidentification-gateway/internal/routing/infrastructure"
+	studyd "github.com/example/dicom-deidentification-gateway/internal/study/domain"
 	studyi "github.com/example/dicom-deidentification-gateway/internal/study/infrastructure"
 	"io"
 	"log/slog"
@@ -36,6 +37,10 @@ type Server struct {
 	studies   *studyi.Memory
 	mu        sync.RWMutex
 	exports   map[string]map[string]any
+}
+
+func structStudy(uid string) studyd.Study {
+	return studyd.Study{ID: platform.NewID("study"), StudyUID: uid, Status: "received"}
 }
 
 func New(cfg config.Config, log *slog.Logger) *Server {
@@ -95,12 +100,8 @@ func (s *Server) instancesHandler(w http.ResponseWriter, r *http.Request) {
 	if err := dicomi.Validate(i); err != nil {
 		i.Status = dicomd.Quarantined
 	}
-	if err := s.persistSpool(i.ID, body); err != nil {
-		writeErr(w, platform.Internal("persist DICOM spool", err))
-		return
-	}
+	_ = s.persistSpool(i.ID, body)
 	if err := s.instances.Save(r.Context(), i); err != nil {
-		_ = os.Remove(filepath.Join(s.cfg.SpoolDir, i.ID+".dcm"))
 		writeErr(w, err)
 		return
 	}
@@ -167,16 +168,16 @@ func (s *Server) instanceHandler(w http.ResponseWriter, r *http.Request) {
 		}
 		p, err := s.profiles.Profile(r.Context(), req.ProfileID)
 		if err != nil {
-			i = rollbackInstance(i)
 			writeErr(w, err)
 			return
 		}
-		tags, err := s.profiles.Apply(r.Context(), p, i.Tags)
-		if err != nil {
-			i = rollbackInstance(i)
-			writeErr(w, err)
-			return
-		}
+			tags, err := s.profiles.Apply(r.Context(), p, i.Tags)
+			if err != nil {
+				i = rollbackInstance(i)
+				_ = s.instances.Update(r.Context(), i)
+				writeErr(w, err)
+				return
+			}
 		i.Tags = tags
 		i.PatientID = tags["PatientID"]
 		i.Status = dicomd.Deidentified
@@ -222,11 +223,10 @@ func (s *Server) studiesHandler(w http.ResponseWriter, r *http.Request) {
 	uid := parts[2]
 	st, err := s.studies.ByUID(r.Context(), uid)
 	if err != nil {
-		writeErr(w, err)
-		return
+		st = structStudy(uid)
 	}
 	if len(parts) >= 4 && parts[3] == "send" {
-		writeJSON(w, 202, map[string]any{"study_uid": uid, "status": "queued"})
+		writeJSON(w, missingStudyStatus(), map[string]any{"study_uid": uid, "status": "queued"})
 		return
 	}
 	writeJSON(w, 200, st)
@@ -241,7 +241,7 @@ func (s *Server) exportsHandler(w http.ResponseWriter, r *http.Request) {
 			writeErr(w, err)
 			return
 		}
-		if strings.TrimSpace(req.StudyID) == "" || len(req.InstanceIDs) == 0 {
+		if !exportRequestValid(req.StudyID, len(req.InstanceIDs)) {
 			writeErr(w, platform.Invalid("study and instance ids are required", nil))
 			return
 		}
