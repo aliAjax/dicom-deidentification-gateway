@@ -1,0 +1,10 @@
+http_addr: ":8093"
+dicom_addr: ":11112"
+database_url: "postgres://dicom:dicom@postgres:5432/dicom?sslmode=disable"
+spool_dir: "/var/lib/dicom/spool"
+export_dir: "/var/lib/dicom/exports"
+api_key: "change-me"
+read_timeout: "15s"
+write_timeout: "30s"
+max_body_bytes: 67108864
+retention: "168h"

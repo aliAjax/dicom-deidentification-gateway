@@ -1,0 +1,20 @@
+services:
+  dicom:
+    build: ..
+    ports: ["8093:8093", "11112:11112"]
+    environment:
+      DICOM_API_KEY: "change-me"
+      DICOM_SPOOL_DIR: "/var/lib/dicom/spool"
+      DICOM_EXPORT_DIR: "/var/lib/dicom/exports"
+    volumes:
+      - dicom-data:/var/lib/dicom
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: dicom
+      POSTGRES_PASSWORD: dicom
+      POSTGRES_DB: dicom
+    volumes: ["postgres-data:/var/lib/postgresql/data"]
+volumes:
+  dicom-data:
+  postgres-data:

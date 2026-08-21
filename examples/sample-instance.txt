@@ -1,0 +1,12 @@
+PatientName=Jane Doe
+PatientID=patient-123
+PatientBirthDate=19800102
+PatientSex=F
+AccessionNumber=ACC-42
+StudyDate=20260821
+StudyInstanceUID=1.2.840.113619.2.55.3.604688.1234
+SeriesInstanceUID=1.2.840.113619.2.55.3.604688.1234.1
+SOPInstanceUID=1.2.840.113619.2.55.3.604688.1234.1.1
+SOPClassUID=1.2.840.10008.5.1.4.1.1.2
+Modality=CT
+SourceAE=RESEARCH-AE
