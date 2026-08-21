@@ -31,6 +31,10 @@ func Middleware(v Validator, next http.Handler) http.Handler {
 			next.ServeHTTP(w, r)
 			return
 		}
+		if validatorIsNil(v) {
+			http.Error(w, `{"error":"unauthorized"}`, http.StatusUnauthorized)
+			return
+		}
 		p, err := v.Validate(r.Context(), r.Header.Get("X-API-Key"))
 		if err != nil {
 			http.Error(w, `{"error":"unauthorized"}`, http.StatusUnauthorized)

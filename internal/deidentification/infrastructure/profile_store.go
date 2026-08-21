@@ -3,6 +3,7 @@ package infrastructure
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"github.com/example/dicom-deidentification-gateway/internal/deidentification/domain"
 	"os"
 	"path/filepath"
@@ -15,7 +16,9 @@ type FileProfileStore struct {
 }
 
 func (f *FileProfileStore) Save(ctx context.Context, p domain.Profile) error {
-	if f.Dir == "" { return nil }
+	if f.Dir == "" {
+		return fmt.Errorf("profile store directory not configured")
+	}
 	select {
 	case <-ctx.Done():
 		return ctx.Err()

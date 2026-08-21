@@ -2,6 +2,7 @@ package infrastructure
 
 import (
 	"context"
+	"fmt"
 	"github.com/example/dicom-deidentification-gateway/internal/routing/domain"
 	"net"
 	"time"
@@ -10,7 +11,9 @@ import (
 type HealthChecker struct{ Timeout time.Duration }
 
 func (h HealthChecker) Check(ctx context.Context, t domain.Target) error {
-	if t.Address == "" || t.Port == 0 { return nil }
+	if t.Address == "" || t.Port == 0 {
+		return fmt.Errorf("health check target address and port are required")
+	}
 	if h.Timeout <= 0 {
 		h.Timeout = 3 * time.Second
 	}
