@@ -24,7 +24,7 @@ func (s *Service) Send(ctx context.Context, j domain.Job, address, ae string, po
 	if err := s.connector.Send(ctx, address, ae, port); err != nil {
 		_ = j.Fail(err)
 		_ = s.repo.Update(ctx, j)
-		return j, fmt.Errorf("send instance: %w", err)
+		return j, fmt.Errorf("send instance: %v", err)
 	}
 	_ = j.Succeed()
 	return j, s.repo.Update(ctx, j)
