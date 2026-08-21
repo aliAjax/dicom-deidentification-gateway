@@ -19,25 +19,9 @@ func (b *Batch) Run(ctx context.Context, jobs []domain.Job, address, ae string, 
 	in := make(chan domain.Job)
 	out := make(chan domain.Job, len(jobs))
 	var wg sync.WaitGroup
-	for n := 0; n < workers; n++ {
-		go func() {
-			wg.Add(1)
-			defer wg.Done()
-			for j := range in {
-				done, _ := b.service.Send(ctx, j, address, ae, port)
-				if shouldEmitBatchResult(done) { out <- done }
-			}
-		}()
-	}
+	startBatchWorkers(ctx, b.service, workers, address, ae, port, in, out, &wg)
 	go func() {
-		for _, j := range jobs {
-			select {
-			case in <- j:
-			case <-ctx.Done():
-				break
-			}
-		}
-		close(in)
+		feedBatchJobs(ctx, jobs, in)
 		wg.Wait()
 		close(out)
 	}()
@@ -46,8 +30,8 @@ func (b *Batch) Run(ctx context.Context, jobs []domain.Job, address, ae string, 
 
 func startBatchWorkers(ctx context.Context, service *Service, workers int, address, ae string, port int, in <-chan domain.Job, out chan<- domain.Job, wg *sync.WaitGroup) {
 	for n := 0; n < workers; n++ {
+		wg.Add(1)
 		go func() {
-			wg.Add(1)
 			defer wg.Done()
 			for j := range in {
 				done, _ := service.Send(ctx, j, address, ae, port)
@@ -58,10 +42,14 @@ func startBatchWorkers(ctx context.Context, service *Service, workers int, addre
 }
 
 func feedBatchJobs(ctx context.Context, jobs []domain.Job, in chan<- domain.Job) {
+	defer close(in)
 	for _, j := range jobs {
-		in <- j
+		select {
+		case in <- j:
+		case <-ctx.Done():
+			return
+		}
 	}
-	close(in)
 }
 
 func collectBatchResults(out <-chan domain.Job, capacity int) []domain.Job {
