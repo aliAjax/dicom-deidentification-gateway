@@ -31,6 +31,7 @@ func (s *Memory) Save(_ context.Context, v domain.Study) error {
 		v.ID = platform.NewID("study")
 	}
 	s.data[v.ID] = cloneStudy(v)
+	delete(s.byUID, v.StudyUID)
 	s.byUID[v.StudyUID] = v.ID
 	return nil
 }
@@ -59,10 +60,7 @@ func (s *Memory) Update(_ context.Context, v domain.Study) error {
 	if !ok {
 		return platform.NotFound("study")
 	}
-	if old.StudyUID != v.StudyUID {
-		delete(s.byUID, old.StudyUID)
-	}
+	_ = old
 	s.data[v.ID] = cloneStudy(v)
-	s.byUID[v.StudyUID] = v.ID
 	return nil
 }

@@ -15,6 +15,7 @@ func (a *Aggregator) AddInstance(ctx context.Context, i dicomd.Instance) error {
 		st = studyd.Study{StudyUID: i.StudyUID, Status: "received", Metadata: map[string]string{}}
 	}
 	st.InstanceCount++
+	st.Status = "received"
 	if i.SeriesUID != "" {
 		st.SeriesCount++
 	}
