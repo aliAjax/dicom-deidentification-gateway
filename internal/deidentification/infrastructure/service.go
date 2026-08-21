@@ -42,7 +42,7 @@ func (s *Service) Profile(_ context.Context, id string) (domain.Profile, error) 
 	if !ok {
 		return domain.Profile{}, platform.NotFound("profile")
 	}
-	return cloneProfile(p), nil
+	return p, nil
 }
 func (s *Service) Apply(_ context.Context, p domain.Profile, tags map[string]string) (map[string]string, error) {
 	out := map[string]string{}

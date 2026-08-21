@@ -48,7 +48,7 @@ func (s *MemoryStore) Get(_ context.Context, id string) (domain.Instance, error)
 	if !ok {
 		return domain.Instance{}, platform.NotFound("instance")
 	}
-	return cloneInstance(i), nil
+	return i, nil
 }
 func (s *MemoryStore) FindByHash(_ context.Context, h string) (domain.Instance, error) {
 	s.mu.RLock()
@@ -57,7 +57,7 @@ func (s *MemoryStore) FindByHash(_ context.Context, h string) (domain.Instance, 
 	if !ok {
 		return domain.Instance{}, platform.NotFound("instance hash")
 	}
-	return cloneInstance(s.data[id]), nil
+	return s.data[id], nil
 }
 func (s *MemoryStore) List(_ context.Context, status string, limit int) ([]domain.Instance, error) {
 	s.mu.RLock()
@@ -65,7 +65,7 @@ func (s *MemoryStore) List(_ context.Context, status string, limit int) ([]domai
 	out := make([]domain.Instance, 0)
 	for _, i := range s.data {
 		if status == "" || string(i.Status) == status {
-			out = append(out, cloneInstance(i))
+			out = append(out, i)
 			if len(out) >= limit && limit > 0 {
 				break
 			}

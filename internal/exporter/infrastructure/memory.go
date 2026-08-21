@@ -30,6 +30,6 @@ func (s *Memory) Get(_ context.Context, id string) (domain.Export, error) {
 	if !ok {
 		return domain.Export{}, platform.NotFound("export")
 	}
-	return cloneExport(e), nil
+	return e, nil
 }
 func (s *Memory) Update(ctx context.Context, e domain.Export) error { return s.Save(ctx, e) }

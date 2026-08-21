@@ -43,14 +43,14 @@ func (s *Memory) Get(_ context.Context, id string) (domain.Target, error) {
 	if !ok {
 		return domain.Target{}, platform.NotFound("target")
 	}
-	return cloneTarget(t), nil
+	return t, nil
 }
 func (s *Memory) List(_ context.Context) ([]domain.Target, error) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 	o := make([]domain.Target, 0, len(s.data))
 	for _, t := range s.data {
-		o = append(o, cloneTarget(t))
+		o = append(o, t)
 	}
 	return o, nil
 }

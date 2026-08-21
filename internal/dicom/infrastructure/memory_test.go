@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/example/dicom-deidentification-gateway/internal/dicom/domain"
 	"testing"
+	"sync"
 )
 
 func TestMemoryStoreConcurrentListAndUpdate(t *testing.T) {
@@ -42,9 +43,10 @@ func TestMemoryStoreSnapshotIsolation(t *testing.T) {
 		t.Fatal(err)
 	}
 	in.Tags["PatientID"] = "caller"
-	first, _ := s.Get(ctx, "i")
-	first.Tags["PatientID"] = "reader"
-	second, _ := s.Get(ctx, "i")
+	start:=make(chan struct{});var wg sync.WaitGroup;wg.Add(2);var second domain.Instance
+	go func(){defer wg.Done();<-start;for n:=0;n<20;n++{first,_:=s.Get(ctx,"i");first.Tags["PatientID"]="reader"}}()
+	go func(){defer wg.Done();<-start;for n:=0;n<20;n++{_ = s.Update(ctx,domain.Instance{ID:"i",ContentHash:"h",Tags:map[string]string{"PatientID":"writer"}});second,_=s.Get(ctx,"i")}}()
+	close(start);wg.Wait()
 	if second.Tags["PatientID"] != "P-1" {
 		t.Fatalf("snapshot=%v", second.Tags)
 	}
