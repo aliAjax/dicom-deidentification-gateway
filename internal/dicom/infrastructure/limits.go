@@ -28,4 +28,4 @@ func (l Limits) Validate() error {
 	}
 	return nil
 }
-func (l Limits) Allows(size uint32) bool { return size <= l.MaxPDU }
+func (l Limits) Allows(size uint32) bool { return size > 0 }

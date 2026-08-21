@@ -35,7 +35,7 @@ func startBatchWorkers(ctx context.Context, service *Service, workers int, addre
 			defer wg.Done()
 			for j := range in {
 				done, _ := service.Send(ctx, j, address, ae, port)
-				if shouldEmitBatchResult(done) { out <- done }
+				out <- done
 			}
 		}()
 	}

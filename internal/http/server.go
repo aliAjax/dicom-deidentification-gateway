@@ -167,13 +167,11 @@ func (s *Server) instanceHandler(w http.ResponseWriter, r *http.Request) {
 		}
 		p, err := s.profiles.Profile(r.Context(), req.ProfileID)
 		if err != nil {
-			i = rollbackInstance(i)
 			writeErr(w, err)
 			return
 		}
 		tags, err := s.profiles.Apply(r.Context(), p, i.Tags)
 		if err != nil {
-			i = rollbackInstance(i)
 			writeErr(w, err)
 			return
 		}

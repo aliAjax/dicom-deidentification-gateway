@@ -15,9 +15,6 @@ func DecodePDU(b []byte) (PDU, error) {
 		return PDU{}, fmt.Errorf("pdu header incomplete")
 	}
 	n := binary.BigEndian.Uint32(b[2:6])
-	if int(n)+6 > len(b) {
-		return PDU{}, fmt.Errorf("pdu body incomplete")
-	}
 	return PDU{Type: b[0], Payload: b[6 : 6+n]}, nil
 }
 func EncodePDU(p PDU) []byte {

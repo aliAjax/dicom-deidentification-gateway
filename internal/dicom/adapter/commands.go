@@ -56,9 +56,6 @@ func DecodeCommand(b []byte) (Command, error) {
 		}
 		tag := binary.LittleEndian.Uint16(b[2:])
 		n := int(binary.LittleEndian.Uint32(b[4:]))
-		if n < 0 || n+8 > len(b) {
-			return c, fmt.Errorf("command element length invalid")
-		}
 		v := b[8 : 8+n]
 		switch tag {
 		case 0x0100:
