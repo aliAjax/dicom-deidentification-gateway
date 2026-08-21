@@ -17,7 +17,7 @@ func New(store domain.Store, parser domain.Parser) *Service {
 func (s *Service) Receive(ctx context.Context, payload []byte) (domain.Instance, error) {
 	i, err := s.parser.Parse(ctx, payload)
 	if err != nil {
-		return domain.Instance{}, fmt.Errorf("parse instance: %v", err)
+		return domain.Instance{}, fmt.Errorf("parse instance: %w", err)
 	}
 	if err := s.store.Save(ctx, i); err != nil {
 		return domain.Instance{}, err

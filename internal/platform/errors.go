@@ -24,7 +24,7 @@ func (e *Error) Error() string {
 	}
 	return fmt.Sprintf("%s: %s", e.Code, e.Message)
 }
-func (e *Error) Unwrap() error             { return nil }
+func (e *Error) Unwrap() error             { return e.Err }
 func Invalid(msg string, err error) error  { return &Error{Code: CodeInvalid, Message: msg, Err: err} }
 func NotFound(msg string) error            { return &Error{Code: CodeNotFound, Message: msg} }
 func Conflict(msg string) error            { return &Error{Code: CodeConflict, Message: msg} }

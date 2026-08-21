@@ -19,7 +19,7 @@ func (q *Queue) Enqueue(ctx context.Context, instanceID string, b []byte) (domai
 	id := platform.NewID("spool")
 	path, err := q.files.Write(ctx, id+".dcm", b)
 	if err != nil {
-		return domain.Item{}, fmt.Errorf("write spool: %v", err)
+		return domain.Item{}, fmt.Errorf("write spool: %w", err)
 	}
 	item := domain.Item{ID: id, InstanceID: instanceID, Path: path, State: "pending"}
 	if err = q.repo.Put(ctx, item); err != nil {
